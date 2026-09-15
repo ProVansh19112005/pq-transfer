@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQ Transfer — {% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if session.get('is_admin') %}
+<nav>
+  <div class="nav-left">
+    <span class="nav-logo">⚛ PQ Transfer</span>
+    <span class="nav-badge" style="background:#e74c3c22;border-color:#e74c3c44;color:#e74c3c;">
+      Admin Mode
+    </span>
+  </div>
+  <div class="nav-right">
+    <a href="{{ url_for('tx.admin_analytics') }}">Analytics</a>
+    <a href="{{ url_for('auth.admin_logout') }}" class="btn-logout">Logout</a>
+  </div>
+</nav>
+{% elif current_user.is_authenticated %}
+<nav>
+  <div class="nav-left">
+    <span class="nav-logo">⚛ PQ Transfer</span>
+    <span class="nav-badge">Quantum Resistant</span>
+  </div>
+  <div class="nav-right">
+    <a href="{{ url_for('tx.dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('tx.send') }}">Send</a>
+    <a href="{{ url_for('tx.history') }}" id="history-link" style="position:relative;">
+      History
+      <span id="history-badge" style="display:none;background:#e74c3c;color:#fff;
+            font-size:0.62rem;font-weight:700;border-radius:10px;padding:1px 6px;
+            margin-left:4px;vertical-align:top;"></span>
+    </a>
+    <a href="{{ url_for('tx.wallet') }}">Wallet</a>
+    <a href="{{ url_for('auth.security') }}">Security</a>
+    <a href="{{ url_for('tx.profile') }}">Profile</a>
+  </div>
+</nav>
+{% else %}
+<nav>
+  <div class="nav-left">
+    <span class="nav-logo">⚛ PQ Transfer</span>
+    <span class="nav-badge">Quantum Resistant</span>
+  </div>
+</nav>
+{% endif %}
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</div>
+
+<script>
+{% if current_user.is_authenticated and not session.get('is_admin') %}
+async function checkNewTransactions() {
+  try {
+    const res    = await fetch('/api/notifications');
+    const data   = await res.json();
+    if (!data.length) return;
+    const latestId = data[0].id;
+    const seenId   = parseInt(localStorage.getItem('pq_last_seen_tx_id') || '0');
+    if (latestId > seenId) {
+      const newCount = data.filter(tx => tx.id > seenId).length;
+      const badge = document.getElementById('history-badge');
+      const link  = document.getElementById('history-link');
+      if (badge) { badge.textContent = newCount > 9 ? '9+' : newCount; badge.style.display = 'inline-block'; }
+      if (link)  { link.style.color = '#00d4ff'; link.classList.add('nav-shine'); }
+    }
+  } catch(e) {}
+}
+checkNewTransactions();
+setInterval(checkNewTransactions, 10000);
+{% endif %}
+</script>
+</body>
+</html>

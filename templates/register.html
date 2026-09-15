@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>⚛ PQ Transfer</h1>
+      <p>Create your quantum-resistant wallet</p>
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username" placeholder="yourname" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="••••••••" minlength="8" required>
+        <p class="hint">Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character</p>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" name="confirm" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn-primary">Create Account & Wallet</button>
+    </form>
+    <p class="auth-note">⚠ Key generation takes ~30 seconds on first registration</p>
+    <p class="auth-link">Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+  </div>
+</div>
+{% endblock %}

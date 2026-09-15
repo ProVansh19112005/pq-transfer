@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-top">
+    <div>
+      <h1>Welcome back, {{ user.username }} 👋</h1>
+    </div>
+    <a href="{{ url_for('tx.send') }}" class="btn-primary">+ New Transfer</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <h3>Demo Balance</h3>
+    <div class="stat-value">₹ {{ "{:,.0f}".format(user.demo_balance) }}</div>
+    <div class="stat-sub" style="color:#f39c12;">🎮 Demo Account</div>
+  </div>
+  <div class="stat-card">
+    <h3><span class="coin-icon coin-ltc">Ł</span>Litecoin</h3>
+    <div class="stat-value" style="font-size:1.4rem;">{{ "%.6f"|format(ltc_bal) }}</div>
+    <div class="stat-sub">
+      ≈ ₹{{ "{:,.0f}".format(ltc_bal * prices.LTC.inr) }} ·
+      ${{ "%.2f"|format(ltc_bal * prices.LTC.usd) }}
+    </div>
+  </div>
+  <div class="stat-card">
+    <h3><span class="coin-icon coin-trx">T</span>Tron</h3>
+    <div class="stat-value" style="font-size:1.4rem;">{{ "%.4f"|format(trx_bal) }}</div>
+    <div class="stat-sub">
+      ≈ ₹{{ "{:,.0f}".format(trx_bal * prices.TRX.inr) }} ·
+      ${{ "%.2f"|format(trx_bal * prices.TRX.usd) }}
+    </div>
+  </div>
+  <div class="stat-card">
+    <h3>Wallet Security</h3>
+    <div class="stat-value" style="font-size:1rem;">🔒 PQ + AQS-256</div>
+    <div class="stat-sub">Quantum Resistant</div>
+  </div>
+</div>
+
+{% set ltc_inr = ltc_bal * prices.LTC.inr %}
+{% set trx_inr = trx_bal * prices.TRX.inr %}
+{% set total_inr = user.demo_balance + ltc_inr + trx_inr %}
+{% set demo_pct = (user.demo_balance / total_inr * 100) if total_inr > 0 else 0 %}
+{% set ltc_pct  = (ltc_inr / total_inr * 100) if total_inr > 0 else 0 %}
+{% set trx_pct  = (trx_inr / total_inr * 100) if total_inr > 0 else 0 %}
+
+<div class="info-card" style="margin-top:20px;">
+  <h3>Combined Portfolio Value</h3>
+  <div class="stat-value" style="font-size:2rem;">₹ {{ "{:,.0f}".format(total_inr) }}</div>
+  <div class="stat-sub" style="margin-bottom:6px;">Demo balance + live LTC & TRX value combined</div>
+
+  <div class="alloc-bar">
+    <div class="alloc-seg" style="width:{{ demo_pct }}%; background:#f39c12;"></div>
+    <div class="alloc-seg" style="width:{{ ltc_pct }}%; background:#bfbbbb;"></div>
+    <div class="alloc-seg" style="width:{{ trx_pct }}%; background:#ff0013;"></div>
+  </div>
+  <div class="alloc-legend">
+    <span><span class="dot" style="background:#f39c12;"></span>Demo — {{ "%.1f"|format(demo_pct) }}%</span>
+    <span><span class="dot" style="background:#bfbbbb;"></span>LTC — {{ "%.1f"|format(ltc_pct) }}%</span>
+    <span><span class="dot" style="background:#ff0013;"></span>TRX — {{ "%.1f"|format(trx_pct) }}%</span>
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <div style="display:flex;gap:12px;">
+    <div class="stat-card" style="flex:1;padding:14px;">
+      <h3><span class="coin-icon coin-ltc">Ł</span>LTC Price</h3>
+      <div style="font-size:1.1rem;color:#b0b0b0;font-weight:600;">
+        ₹{{ "{:,.0f}".format(prices.LTC.inr) }}
+        <span style="font-size:0.75rem;color:#666;">/ ${{ "{:,.2f}".format(prices.LTC.usd) }}</span>
+      </div>
+    </div>
+    <div class="stat-card" style="flex:1;padding:14px;">
+      <h3><span class="coin-icon coin-trx">T</span>TRX Price</h3>
+      <div style="font-size:1.1rem;color:#b0b0b0;font-weight:600;">
+        ₹{{ "{:.4f}".format(prices.TRX.inr) }}
+        <span style="font-size:0.75rem;color:#666;">/ ${{ "{:.4f}".format(prices.TRX.usd) }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

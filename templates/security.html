@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Security{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Security Settings</h1>
+  <p class="sub">Manage extra protection for your account</p>
+</div>
+
+<div class="form-card" style="max-width:520px;">
+  <h3 style="color:#aaa;margin-bottom:16px;">🔐 Login Passcode</h3>
+
+  {% if user.has_passcode %}
+  <div style="background:#2ecc7115;border:1px solid #2ecc7133;border-radius:8px;
+              padding:14px;margin-bottom:20px;color:#2ecc71;font-size:0.85rem;">
+    ✓ Passcode is currently <strong>ENABLED</strong>.
+  </div>
+
+  <form method="POST">
+    <input type="hidden" name="action" value="remove_passcode">
+    <div class="form-group">
+      <label>Confirm password to remove passcode</label>
+      <input type="password" name="current_password" placeholder="••••••••" required>
+    </div>
+    <button type="submit" class="btn-danger">Remove Passcode</button>
+  </form>
+
+  {% else %}
+  <div style="background:#f39c1215;border:1px solid #f39c1233;border-radius:8px;
+              padding:14px;margin-bottom:20px;color:#f39c12;font-size:0.82rem;">
+    ⚠ <strong>Warning:</strong> If forgotten, there is no recovery. Write it down safely.
+  </div>
+
+  <form method="POST">
+    <input type="hidden" name="action" value="set_passcode">
+    <div class="form-group">
+      <label>Create 8-Character Passcode</label>
+      <input type="password" name="passcode" maxlength="8" minlength="8"
+             placeholder="8 letters/numbers" required>
+    </div>
+    <div class="form-group">
+      <label>Confirm Passcode</label>
+      <input type="password" name="confirm_passcode" maxlength="8" minlength="8"
+             placeholder="Re-enter passcode" required>
+    </div>
+    <button type="submit" class="btn-primary">Enable Passcode</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>⚛ PQ Transfer</h1>
+      <p>Quantum-resistant file & payment transfer</p>
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+      </div>
+      <div class="form-group">
+        <label>Verify you're human: {{ captcha_question }}</label>
+        <input type="text" name="captcha" placeholder="Answer" required>
+      </div>
+      <button type="submit" class="btn-primary">Login</button>
+    </form>
+    <p class="auth-link">
+      <a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a>
+    </p>
+    <p class="auth-link">
+      Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

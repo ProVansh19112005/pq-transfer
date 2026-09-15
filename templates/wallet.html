@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}My Wallets{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>My Wallets</h1>
+  <p class="sub">Your real crypto addresses and demo account</p>
+</div>
+
+<div class="stat-card" style="margin-bottom:20px;">
+  <h3>🎮 Demo Balance</h3>
+  <div class="stat-value">₹ {{ "{:,.2f}".format(user.demo_balance) }}</div>
+  <div class="stat-sub" style="color:#f39c12;">
+    This is test money — not real currency.
+  </div>
+</div>
+
+{% set ltc_inr = ltc_bal * prices.LTC.inr %}
+{% set trx_inr = trx_bal * prices.TRX.inr %}
+{% set total_inr = user.demo_balance + ltc_inr + trx_inr %}
+{% set demo_pct = (user.demo_balance / total_inr * 100) if total_inr > 0 else 0 %}
+{% set ltc_pct  = (ltc_inr / total_inr * 100) if total_inr > 0 else 0 %}
+{% set trx_pct  = (trx_inr / total_inr * 100) if total_inr > 0 else 0 %}
+
+<div class="info-card" style="margin-bottom:20px;">
+  <h3>Combined Portfolio Value</h3>
+  <div class="stat-value" style="font-size:2rem;">₹ {{ "{:,.0f}".format(total_inr) }}</div>
+  <div class="stat-sub" style="margin-bottom:6px;">Demo balance + live LTC & TRX value combined</div>
+
+  <div class="alloc-bar">
+    <div class="alloc-seg" style="width:{{ demo_pct }}%; background:#f39c12;"></div>
+    <div class="alloc-seg" style="width:{{ ltc_pct }}%; background:#bfbbbb;"></div>
+    <div class="alloc-seg" style="width:{{ trx_pct }}%; background:#ff0013;"></div>
+  </div>
+  <div class="alloc-legend">
+    <span><span class="dot" style="background:#f39c12;"></span>Demo — {{ "%.1f"|format(demo_pct) }}%</span>
+    <span><span class="dot" style="background:#bfbbbb;"></span>LTC — {{ "%.1f"|format(ltc_pct) }}%</span>
+    <span><span class="dot" style="background:#ff0013;"></span>TRX — {{ "%.1f"|format(trx_pct) }}%</span>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="form-card">
+    <h3 style="color:#aaa;margin-bottom:16px;" class="coin-row">
+      <span class="coin-icon coin-ltc">Ł</span> Litecoin (LTC)
+    </h3>
+    <div class="stat-value" style="font-size:1.5rem;margin-bottom:4px;">
+      {{ "%.6f"|format(ltc_bal) }} LTC
+    </div>
+    <div style="font-size:0.82rem;color:#666;margin-bottom:20px;">
+      ≈ ₹{{ "{:,.0f}".format(ltc_inr) }} ·
+      ${{ "%.2f"|format(ltc_bal * prices.LTC.usd) }}
+    </div>
+
+    <div class="form-group">
+      <label>Your LTC Deposit Address</label>
+      <div class="copy-field">
+        <span class="mono-small" style="color:#2ecc71;">{{ user.ltc_address or 'Not generated yet' }}</span>
+        {% if user.ltc_address %}
+        <button class="copy-btn" onclick="copyText('{{ user.ltc_address }}', this)">📋 Copy</button>
+        {% endif %}
+      </div>
+      <p class="hint">Send LTC to this address to deposit into your wallet</p>
+    </div>
+
+    <div style="background:#f39c1215;border:1px solid #f39c1233;border-radius:8px;
+                padding:12px;font-size:0.75rem;color:#f39c12;">
+      ⚠ Real mainnet address. Max send: 0.01 LTC per transaction.
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3 style="color:#aaa;margin-bottom:16px;" class="coin-row">
+      <span class="coin-icon coin-trx">T</span> Tron (TRX)
+    </h3>
+    <div class="stat-value" style="font-size:1.5rem;margin-bottom:4px;">
+      {{ "%.4f"|format(trx_bal) }} TRX
+    </div>
+    <div style="font-size:0.82rem;color:#666;margin-bottom:20px;">
+      ≈ ₹{{ "{:,.0f}".format(trx_inr) }} ·
+      ${{ "%.4f"|format(trx_bal * prices.TRX.usd) }}
+    </div>
+
+    <div class="form-group">
+      <label>Your TRX Deposit Address</label>
+      <div class="copy-field">
+        <span class="mono-small" style="color:#e74c3c;">{{ user.trx_address or 'Not generated yet' }}</span>
+        {% if user.trx_address %}
+        <button class="copy-btn" onclick="copyText('{{ user.trx_address }}', this)">📋 Copy</button>
+        {% endif %}
+      </div>
+      <p class="hint">Send TRX to this address to deposit into your wallet</p>
+    </div>
+
+    <div style="background:#f39c1215;border:1px solid #f39c1233;border-radius:8px;
+                padding:12px;font-size:0.75rem;color:#f39c12;">
+      ⚠ Real mainnet address. Max send: 10 TRX per transaction.
+    </div>
+  </div>
+</div>
+
+<div class="form-card" style="margin-top:20px;">
+  <h3 style="color:#aaa;margin-bottom:16px;">⚛ Post-Quantum Wallet</h3>
+  <div class="form-group">
+    <label>PQ Wallet Address</label>
+    <div class="copy-field">
+      <span class="mono-small" style="color:#00d4ff;">{{ user.wallet_address }}</span>
+      <button class="copy-btn" onclick="copyText('{{ user.wallet_address }}', this)">📋 Copy</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;">
+    <div style="background:#2ecc7115;border:1px solid #2ecc7133;border-radius:8px;padding:12px;">
+      <p style="color:#2ecc71;font-size:0.78rem;font-weight:600;">FALCON</p>
+      <p style="color:#555;font-size:0.72rem;">Dilithium2 · Fast</p>
+    </div>
+    <div style="background:#3498db15;border:1px solid #3498db33;border-radius:8px;padding:12px;">
+      <p style="color:#3498db;font-size:0.78rem;font-weight:600;">DILITHIUM</p>
+      <p style="color:#555;font-size:0.72rem;">Dilithium3 · Balanced</p>
+    </div>
+    <div style="background:#e74c3c15;border:1px solid #e74c3c33;border-radius:8px;padding:12px;">
+      <p style="color:#e74c3c;font-size:0.78rem;font-weight:600;">SPHINCS+</p>
+      <p style="color:#555;font-size:0.72rem;">Dilithium5 · Maximum</p>
+    </div>
+    <div style="background:#9b59b615;border:1px solid #9b59b633;border-radius:8px;padding:12px;">
+      <p style="color:#9b59b6;font-size:0.78rem;font-weight:600;">AQS-256-1</p>
+      <p style="color:#555;font-size:0.72rem;">FALCON & DILITHIUM</p>
+    </div>
+    <div style="background:#8e44ad15;border:1px solid #8e44ad33;border-radius:8px;padding:12px;">
+      <p style="color:#8e44ad;font-size:0.78rem;font-weight:600;">AQS-256-2</p>
+      <p style="color:#555;font-size:0.72rem;">DILITHIUM & SPHINCS+</p>
+    </div>
+    <div style="background:#00d4ff15;border:1px solid #00d4ff33;border-radius:8px;padding:12px;">
+      <p style="color:#00d4ff;font-size:0.78rem;font-weight:600;">5 Keypairs</p>
+      <p style="color:#555;font-size:0.72rem;">All generated on register</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  });
+}
+</script>
+{% endblock %}

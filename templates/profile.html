@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>My Profile</h1>
+  <p class="sub">Your account details</p>
+</div>
+
+<div class="form-card" style="max-width:600px;">
+  <h3 style="color:#aaa;margin-bottom:16px;">Account Info</h3>
+
+  <div class="form-group">
+    <label>Username</label>
+    <div class="copy-field">
+      <span>{{ user.username }}</span>
+      <button class="copy-btn" onclick="copyText('{{ user.username }}', this)">📋 Copy</button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Email</label>
+    <div class="copy-field">
+      <span>{{ user.email }}</span>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>PQ Wallet Address</label>
+    <div class="copy-field">
+      <span class="mono-small">{{ user.wallet_address }}</span>
+      <button class="copy-btn" onclick="copyText('{{ user.wallet_address }}', this)">📋 Copy</button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Account Created</label>
+    <div class="copy-field">
+      <span>{{ user.created_at.strftime('%d %b %Y') }}</span>
+    </div>
+  </div>
+
+  <a href="{{ url_for('auth.logout') }}" class="btn-logout-inline" style="display:block;margin-top:10px;">
+    Logout
+  </a>
+</div>
+
+<script>
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Verify Email{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>⚛ Verify Email</h1>
+      {% if purpose == "reset" %}
+      <p>Enter the OTP sent to your email to reset your password</p>
+      {% else %}
+      <p>Enter the 6-digit OTP sent to your email</p>
+      {% endif %}
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label>OTP Code</label>
+        <input type="text" name="otp" placeholder="000000"
+               maxlength="6" style="text-align:center;font-size:1.5rem;
+               letter-spacing:8px;" autofocus required>
+      </div>
+      <button type="submit" class="btn-primary">
+        {% if purpose == "reset" %}✓ Verify & Reset Password
+        {% else %}✓ Verify & Create Account{% endif %}
+      </button>
+    </form>
+    <p class="auth-link" style="margin-top:16px;">
+      Didn't receive it? <a href="{{ url_for('auth.resend_otp') }}">Resend OTP</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

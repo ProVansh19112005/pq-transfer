@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Enter Passcode{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>🔐 Enter Passcode</h1>
+      <p>Extra security step for your account</p>
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label>8-Character Passcode</label>
+        <input type="password" name="passcode" maxlength="8" placeholder="••••••••"
+               style="text-align:center;font-size:1.3rem;letter-spacing:6px;" autofocus required>
+      </div>
+      <button type="submit" class="btn-primary">Unlock</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

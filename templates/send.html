@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Send{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>New Transfer</h1>
+  <p class="sub">Send demo money, crypto, files, or documents</p>
+</div>
+
+<div class="two-col">
+  <div class="form-card">
+    <form method="POST" enctype="multipart/form-data">
+
+      <div class="form-group">
+        <label>Receiver Email</label>
+        <input type="email" name="receiver_email" id="receiver-email" placeholder="receiver@example.com">
+      </div>
+
+      <div class="form-group">
+        <label>Transfer Type</label>
+        <select name="tx_type" id="tx-type" onchange="toggleFields()">
+          <option value="PAYMENT">🎮 Demo Payment (fake ₹)</option>
+          <option value="CRYPTO">💎 Crypto (LTC / TRX)</option>
+          <option value="WITHDRAW">🏦 Withdraw Crypto (external)</option>
+          <option value="FILE">📁 File</option>
+          <option value="DOCUMENT">📄 Document</option>
+          <option value="MESSAGE">💬 Message</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="amount-group" style="display:none;">
+        <label>Amount (₹ Demo)</label>
+        <input type="number" name="amount" id="amount-input"
+               placeholder="0.00" min="0" step="0.01"
+               oninput="updatePaymentInfo()">
+        <div id="payment-info" style="margin-top:10px;padding:10px 14px;
+             background:#00d4ff0a;border:1px solid #00d4ff22;
+             border-radius:8px;font-size:0.78rem;color:#888;display:none;">
+          <span id="payment-algo-text"></span>
+        </div>
+      </div>
+
+      <div id="crypto-group" style="display:none;">
+        <div class="form-group">
+          <label>Currency</label>
+          <select name="currency" id="currency-select">
+            <option value="LTC">Ł Litecoin (LTC)</option>
+            <option value="TRX">Ⓣ Tron (TRX)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Amount</label>
+          <input type="number" name="crypto_amount" id="crypto-amount"
+                 placeholder="0.000000" min="0" step="0.000001"
+                 oninput="updateCryptoInfo()">
+          <div id="crypto-info" style="margin-top:8px;padding:10px;
+               background:#f39c1215;border:1px solid #f39c1233;
+               border-radius:8px;font-size:0.78rem;color:#f39c12;">
+            <div id="crypto-info-text">Enter amount to see value</div>
+            <div id="crypto-balance-text" style="margin-top:4px;color:#555;"></div>
+          </div>
+        </div>
+        <div style="background:#e74c3c15;border:1px solid #e74c3c33;border-radius:8px;
+                    padding:12px;font-size:0.75rem;color:#e74c3c;margin-bottom:14px;">
+          ⚠ Real mainnet crypto. Irreversible.
+        </div>
+      </div>
+
+      <div id="withdraw-group" style="display:none;">
+        <div class="form-group">
+          <label>Currency</label>
+          <select name="withdraw_currency" id="withdraw-currency">
+            <option value="LTC">Ł Litecoin (LTC)</option>
+            <option value="TRX">Ⓣ Tron (TRX)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>External Wallet Address</label>
+          <input type="text" name="external_address" id="external-address"
+                 placeholder="Enter LTC or TRX wallet address">
+        </div>
+        <div class="form-group">
+          <label>Amount</label>
+          <input type="number" name="withdraw_amount" id="withdraw-amount"
+                 placeholder="0.000000" min="0" step="0.000001"
+                 oninput="updateWithdrawInfo()">
+          <div id="withdraw-info" style="margin-top:8px;padding:10px;
+               background:#f39c1215;border:1px solid #f39c1233;
+               border-radius:8px;font-size:0.78rem;color:#f39c12;display:none;">
+            <div id="withdraw-info-text"></div>
+            <div id="withdraw-balance-text" style="margin-top:4px;color:#555;"></div>
+          </div>
+        </div>
+        <div style="background:#e74c3c15;border:1px solid #e74c3c33;border-radius:8px;
+                    padding:12px;font-size:0.75rem;color:#e74c3c;margin-bottom:14px;">
+          ⚠ External wallet. Real mainnet. Irreversible.
+        </div>
+      </div>
+
+      <div class="form-group" id="file-group" style="display:none;">
+        <label>File</label>
+        <input type="file" name="file">
+      </div>
+
+      <div class="form-group" id="sensitivity-group" style="display:none;">
+        <label>Sensitivity</label>
+        <select name="sensitivity">
+          <option value="LOW">LOW — Routine</option>
+          <option value="MEDIUM" selected>MEDIUM — Standard</option>
+          <option value="HIGH">HIGH — Sensitive</option>
+          <option value="CRITICAL">CRITICAL — Maximum Security</option>
+        </select>
+      </div>
+
+      <input type="hidden" name="sensitivity" id="hidden-sensitivity" value="MEDIUM">
+
+      <div class="form-group" id="message-group">
+        <label>Message <span class="optional">(optional)</span></label>
+        <textarea name="message" placeholder="Add a note..." rows="3"></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary">🚀 Sign & Send</button>
+    </form>
+  </div>
+
+  <div>
+    <div class="info-card">
+      <h3>How it works</h3>
+      <div class="steps">
+        <div class="step"><span class="step-n">1</span><span>Choose transfer type</span></div>
+        <div class="step"><span class="step-n">2</span><span>Enter receiver or address</span></div>
+        <div class="step"><span class="step-n">3</span><span>System selects best PQ algorithm</span></div>
+        <div class="step"><span class="step-n">4</span><span>Transaction signed and sent</span></div>
+        <div class="step"><span class="step-n">5</span><span>Receiver notified via email</span></div>
+      </div>
+    </div>
+
+    <div class="info-card" style="margin-top:16px;">
+      <h3>Live Prices</h3>
+      <table class="tx-table">
+        <tr>
+          <td><span class="coin-icon coin-ltc">Ł</span>LTC</td>
+          <td style="color:#aaa;">₹{{ "{:,.0f}".format(prices.LTC.inr) }}</td>
+          <td style="color:#666;">${{ "{:,.2f}".format(prices.LTC.usd) }}</td>
+        </tr>
+        <tr>
+          <td><span class="coin-icon coin-trx">T</span>TRX</td>
+          <td style="color:#aaa;">₹{{ "%.4f"|format(prices.TRX.inr) }}</td>
+          <td style="color:#666;">${{ "%.4f"|format(prices.TRX.usd) }}</td>
+        </tr>
+      </table>
+      <div style="margin-top:10px;font-size:0.72rem;color:#555;">
+        Your LTC: {{ "%.6f"|format(ltc_bal) }} · TRX: {{ "%.4f"|format(trx_bal) }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const prices   = { LTC: {{ prices.LTC.inr }}, TRX: {{ prices.TRX.inr }} };
+const balances = { LTC: {{ ltc_bal }}, TRX: {{ trx_bal }} };
+const FEE_RESERVE = { LTC: 0.0001, TRX: 0.5 };
+const SAFETY      = { LTC: 0.00002, TRX: 0.05 };
+const MIN_SEND    = { LTC: 0.0001, TRX: 0.5 };
+const MAX_LIMIT   = { LTC: 0.01,   TRX: 10.0 };
+
+function getMaxSendable(currency) {
+  const max = balances[currency] - FEE_RESERVE[currency] - SAFETY[currency];
+  return Math.min(Math.max(0, max), MAX_LIMIT[currency]);
+}
+
+// Fixed algorithm ranges for demo payments — matches classifier.py exactly
+const PAYMENT_RULES = [
+  {
+    min: 0,       max: 10000,
+    label: "₹0 – ₹9,999",
+    algo: "FALCON", color: "#2ecc71",
+    note: "Low value — fast lightweight signature"
+  },
+  {
+    min: 10000,   max: 100000,
+    label: "₹10,000 – ₹99,999",
+    algo: "AQS-256-1", color: "#9b59b6",
+    note: "Medium value — FALCON + DILITHIUM hybrid"
+  },
+  {
+    min: 100000,  max: 500000,
+    label: "₹1,00,000 – ₹4,99,999",
+    algo: "AQS-256-2", color: "#8e44ad",
+    note: "High value — DILITHIUM + SPHINCS+ hybrid"
+  },
+  {
+    min: 500000,  max: Infinity,
+    label: "₹5,00,000+",
+    algo: "SPHINCS+", color: "#e74c3c",
+    note: "Critical value — maximum security hash-based signature"
+  },
+];
+
+function updatePaymentInfo() {
+  const amount  = parseFloat(document.getElementById('amount-input').value) || 0;
+  const infoDiv = document.getElementById('payment-info');
+  const infoTxt = document.getElementById('payment-algo-text');
+  const rule    = PAYMENT_RULES.find(r => amount >= r.min && amount < r.max) || PAYMENT_RULES[3];
+
+  infoDiv.style.display     = 'block';
+  infoDiv.style.borderColor = rule.color + '44';
+  infoDiv.style.background  = rule.color + '0a';
+  infoTxt.innerHTML = `
+    🤖 <strong style="color:${rule.color};">${rule.algo}</strong>
+    <span style="color:#555;margin:0 6px;">·</span>
+    <span style="color:#666;font-size:0.75rem;">${rule.label}</span>
+    <div style="margin-top:4px;color:#555;font-size:0.72rem;">⚡ ${rule.note}</div>
+  `;
+}
+
+function updateCryptoInfo() {
+  const currency = document.getElementById('currency-select').value;
+  const amount   = parseFloat(document.getElementById('crypto-amount').value) || 0;
+  const maxSend  = getMaxSendable(currency);
+  const minSend  = MIN_SEND[currency];
+  const inr      = amount * prices[currency];
+  const infoDiv  = document.getElementById('crypto-info');
+  const infoTxt  = document.getElementById('crypto-info-text');
+
+  const invalid = amount > 0 && (amount > maxSend || amount < minSend);
+  infoDiv.style.borderColor = invalid ? '#e74c3c44' : '#f39c1244';
+  infoDiv.style.background  = invalid ? '#e74c3c15' : '#f39c1215';
+
+  if (amount === 0) {
+    infoTxt.innerHTML = 'Enter amount to see value';
+  } else if (amount > maxSend) {
+    infoTxt.innerHTML = `<span style="color:#e74c3c;">⚠ Exceeds max. Max sendable: <strong>${maxSend.toFixed(6)} ${currency}</strong></span>`;
+  } else if (amount < minSend) {
+    infoTxt.innerHTML = `<span style="color:#e74c3c;">⚠ Below minimum. Min sendable: <strong>${minSend} ${currency}</strong></span>`;
+  } else {
+    infoTxt.innerHTML = `${amount} ${currency} ≈ <strong>₹${inr.toLocaleString('en-IN', {maximumFractionDigits:2})}</strong>`;
+  }
+
+  document.getElementById('crypto-balance-text').innerHTML =
+    `Balance: <strong>${balances[currency].toFixed(6)}</strong> ${currency}
+     · Min: ${minSend} · Max: <strong style="color:#2ecc71;">${maxSend.toFixed(6)}</strong> ${currency}`;
+}
+
+function updateWithdrawInfo() {
+  const currency = document.getElementById('withdraw-currency').value;
+  const amount   = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+  const maxSend  = getMaxSendable(currency);
+  const minSend  = MIN_SEND[currency];
+  const infoDiv  = document.getElementById('withdraw-info');
+  const infoTxt  = document.getElementById('withdraw-info-text');
+
+  infoDiv.style.display = amount > 0 ? 'block' : 'none';
+  const invalid = amount > maxSend || amount < minSend;
+  infoDiv.style.borderColor = invalid ? '#e74c3c44' : '#f39c1244';
+  infoDiv.style.background  = invalid ? '#e74c3c15' : '#f39c1215';
+
+  const inr = amount * prices[currency];
+  if (amount > maxSend) {
+    infoTxt.innerHTML = `<span style="color:#e74c3c;">⚠ Exceeds max. Max sendable: <strong>${maxSend.toFixed(6)} ${currency}</strong></span>`;
+  } else if (amount < minSend) {
+    infoTxt.innerHTML = `<span style="color:#e74c3c;">⚠ Below minimum. Min sendable: <strong>${minSend} ${currency}</strong></span>`;
+  } else {
+    infoTxt.innerHTML = `${amount} ${currency} ≈ <strong>₹${inr.toLocaleString('en-IN', {maximumFractionDigits:2})}</strong>`;
+  }
+
+  document.getElementById('withdraw-balance-text').innerHTML =
+    `Balance: <strong>${balances[currency].toFixed(6)}</strong> ${currency}
+     · Min: ${minSend} · Max: <strong style="color:#2ecc71;">${maxSend.toFixed(6)}</strong> ${currency}`;
+}
+
+function toggleFields() {
+  const type       = document.getElementById('tx-type').value;
+  const isPayment  = type === 'PAYMENT';
+  const isCrypto   = type === 'CRYPTO';
+  const isWithdraw = type === 'WITHDRAW';
+  const isFile     = ['FILE', 'DOCUMENT'].includes(type);
+
+  document.getElementById('receiver-email').required = !isWithdraw;
+  document.getElementById('amount-group').style.display     = isPayment  ? 'block' : 'none';
+  document.getElementById('crypto-group').style.display     = isCrypto   ? 'block' : 'none';
+  document.getElementById('withdraw-group').style.display   = isWithdraw ? 'block' : 'none';
+  document.getElementById('file-group').style.display       = isFile     ? 'block' : 'none';
+  document.getElementById('sensitivity-group').style.display =
+    (isPayment || isCrypto || isWithdraw) ? 'none' : 'block';
+
+  const receiverGroup = document.getElementById('receiver-email').parentElement;
+  receiverGroup.style.display = isWithdraw ? 'none' : 'block';
+
+  const info = document.getElementById('payment-info');
+  if (info) info.style.display = 'none';
+
+  if (isCrypto)   updateCryptoInfo();
+  if (isWithdraw) updateWithdrawInfo();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('currency-select')?.addEventListener('change', updateCryptoInfo);
+  document.getElementById('withdraw-currency')?.addEventListener('change', updateWithdrawInfo);
+  toggleFields();
+});
+</script>
+{% endblock %}

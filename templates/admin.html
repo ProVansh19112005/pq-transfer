@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Platform Analytics</h1>
+  <p class="sub">Aggregate algorithm usage across all users — proof the adaptive system works</p>
+</div>
+
+<!-- Top stats -->
+<div class="stats-grid" style="margin-bottom:20px;">
+  <div class="stat-card">
+    <h3>Total Users</h3>
+    <div class="stat-value">{{ stats.total_users }}</div>
+    <div class="stat-sub">Registered accounts</div>
+  </div>
+  <div class="stat-card">
+    <h3>Total Transactions</h3>
+    <div class="stat-value">{{ stats.total_txns }}</div>
+    <div class="stat-sub">All time</div>
+  </div>
+  <div class="stat-card">
+    <h3>Demo Volume</h3>
+    <div class="stat-value" style="font-size:1.2rem;">Rs {{ "{:,.0f}".format(stats.total_demo_volume) }}</div>
+    <div class="stat-sub">Total demo payments</div>
+  </div>
+  <div class="stat-card">
+    <h3>Files Transferred</h3>
+    <div class="stat-value">{{ stats.total_files }}</div>
+    <div class="stat-sub">Documents & files</div>
+  </div>
+</div>
+
+<!-- Algorithm usage bars -->
+<div class="info-card" style="margin-bottom:20px;">
+  <h3>Algorithm Usage Distribution</h3>
+  <p class="sub" style="margin-bottom:16px;">
+    This proves the adaptive selection is working — different algorithms for different risk levels
+  </p>
+  {% set total = stats.total_txns or 1 %}
+  {% for algo, count in stats.algo_counts.items() %}
+  {% set pct = (count / total * 100) | round(1) %}
+  {% set color = {
+    'FALCON': '#2ecc71',
+    'DILITHIUM': '#3498db',
+    'SPHINCS': '#e74c3c',
+    'AQS-256-1': '#9b59b6',
+    'AQS-256-2': '#8e44ad',
+  }.get(algo, '#00d4ff') %}
+  <div style="margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-size:0.82rem;color:{{ color }};font-weight:600;">{{ algo }}</span>
+      <span style="font-size:0.78rem;color:#666;">{{ count }} txns ({{ pct }}%)</span>
+    </div>
+    <div style="background:#0f1117;border-radius:6px;height:10px;overflow:hidden;">
+      <div style="width:{{ pct }}%;height:100%;background:{{ color }};border-radius:6px;transition:width 0.5s;"></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="two-col" style="margin-bottom:20px;">
+  <!-- By type breakdown -->
+  <div class="info-card">
+    <h3>Transactions by Type</h3>
+    <table class="tx-table" style="margin-top:10px;">
+      <thead><tr><th>Type</th><th>Count</th><th>% of Total</th></tr></thead>
+      <tbody>
+        {% for tx_type, count in stats.type_counts.items() %}
+        <tr>
+          <td><span class="type-badge">{{ tx_type }}</span></td>
+          <td>{{ count }}</td>
+          <td style="color:#666;">{{ (count / (stats.total_txns or 1) * 100) | round(1) }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Sensitivity breakdown -->
+  <div class="info-card">
+    <h3>Transactions by Sensitivity</h3>
+    <table class="tx-table" style="margin-top:10px;">
+      <thead><tr><th>Sensitivity</th><th>Count</th><th>% of Total</th></tr></thead>
+      <tbody>
+        {% for sens, count in stats.sensitivity_counts.items() %}
+        {% set s_color = {'LOW': '#2ecc71', 'MEDIUM': '#f39c12', 'HIGH': '#e67e22', 'CRITICAL': '#e74c3c'}.get(sens, '#aaa') %}
+        <tr>
+          <td style="color:{{ s_color }};font-weight:600;">{{ sens }}</td>
+          <td>{{ count }}</td>
+          <td style="color:#666;">{{ (count / (stats.total_txns or 1) * 100) | round(1) }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Avg metrics -->
+<div class="info-card" style="margin-bottom:20px;">
+  <h3>Average Cryptographic Metrics by Algorithm</h3>
+  <table class="tx-table" style="margin-top:10px;">
+    <thead>
+      <tr>
+        <th>Algorithm</th><th>Avg Sig Size</th><th>Avg Sign Time</th>
+        <th>Avg Risk Score</th><th>Transaction Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for algo, metrics in stats.algo_metrics.items() %}
+      {% set a_color = {
+        'FALCON': '#2ecc71', 'DILITHIUM': '#3498db',
+        'SPHINCS': '#e74c3c', 'AQS-256-1': '#9b59b6', 'AQS-256-2': '#8e44ad'
+      }.get(algo, '#00d4ff') %}
+      <tr>
+        <td>
+          {% set algo_class = algo | replace('-', '') %}
+          <span class="algo-badge {{ algo_class }}">{{ algo }}</span>
+        </td>
+        <td>{{ "{:,}".format(metrics.avg_sig_size | int) }} B</td>
+        <td>{{ metrics.avg_sign_time | round(2) }} ms</td>
+        <td>{{ metrics.avg_risk | round(1) }}/100</td>
+        <td>{{ metrics.count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Recent transactions across all users -->
+<div class="info-card">
+  <h3>Recent Transactions (All Users)</h3>
+  <table class="tx-table full" style="margin-top:10px;">
+    <thead>
+      <tr><th>Hash</th><th>From</th><th>To</th><th>Type</th><th>Algorithm</th><th>Risk</th><th>Time</th></tr>
+    </thead>
+    <tbody>
+      {% for tx in stats.recent_txns %}
+      <tr>
+        <td class="mono">{{ tx.tx_hash[:12] }}...</td>
+        <td>{{ tx.sender.username }}</td>
+        <td>{{ tx.receiver.username }}</td>
+        <td><span class="type-badge">{{ tx.tx_type }}</span></td>
+        <td>
+          {% set algo_class = tx.algorithm | replace('-', '') if tx.algorithm else '' %}
+          <span class="algo-badge {{ algo_class }}">{{ tx.algorithm }}</span>
+        </td>
+        <td style="color:{% if tx.risk_score and tx.risk_score >= 80 %}#e74c3c{% elif tx.risk_score and tx.risk_score >= 60 %}#e67e22{% elif tx.risk_score and tx.risk_score >= 30 %}#f39c12{% else %}#2ecc71{% endif %};">
+          {{ tx.risk_score | round(1) if tx.risk_score else '—' }}
+        </td>
+        <td class="time">{{ (tx.timestamp + timedelta(hours=5, minutes=30)).strftime('%d %b %H:%M') }} IST</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Transaction History</h1>
+  <p class="sub">All your sent and received transfers</p>
+</div>
+
+<div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+  <a href="{{ url_for('tx.export_csv') }}" class="btn-small"
+     style="background:#2ecc7115;border-color:#2ecc7133;color:#2ecc71;padding:8px 18px;font-size:0.82rem;">
+    ⬇ Export CSV
+  </a>
+</div>
+
+<!-- SENT -->
+<h2 class="section-title">Sent ({{ sent|length }})</h2>
+{% if sent %}
+<table class="tx-table full">
+  <thead>
+    <tr>
+      <th>Hash</th><th>To</th><th>Type</th><th>Amount / File</th>
+      <th>Sensitivity</th><th>Algorithm</th>
+      <th>Sig Size</th><th>Time</th><th>Status</th><th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tx in sent %}
+    <tr>
+      <td class="mono">{{ tx.tx_hash[:12] }}...</td>
+      <td>{{ tx.receiver.username }}</td>
+      <td><span class="type-badge">{{ tx.tx_type }}</span></td>
+      <td>
+        {% if tx.crypto_amount %}{{ tx.crypto_amount }} {{ tx.currency }}
+        {% elif tx.amount > 0 %}Rs {{ "{:,.0f}".format(tx.amount) }}
+        {% elif tx.filename %}{{ tx.filename }}
+        {% else %}—{% endif %}
+      </td>
+      <td>{{ tx.final_sensitivity }}</td>
+      <td>
+        {% set algo_class = tx.algorithm | replace('-', '') if tx.algorithm else '' %}
+        <span class="algo-badge {{ algo_class }}">
+          {{ tx.algorithm }}{% if tx.algorithm_manual %} ✎{% endif %}
+        </span>
+        {% if tx.aqs_mode %}
+        <div style="font-size:0.68rem;color:#9b59b6;margin-top:2px;">{{ tx.aqs_mode }}</div>
+        {% endif %}
+      </td>
+      <td>{{ "{:,}".format(tx.sig_size_bytes) }} B</td>
+      <td class="time">
+        {{ (tx.timestamp + timedelta(hours=5, minutes=30)).strftime('%d %b %Y %H:%M') }} IST
+      </td>
+      <td><span class="status-badge">{{ tx.status }}</span></td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="btn-small" onclick="verifyTx({{ tx.id }}, this)"
+                  style="background:#3498db15;border-color:#3498db33;color:#3498db;">
+            🔍 Verify
+          </button>
+          <a href="{{ url_for('tx.receipt', tx_id=tx.id) }}" class="btn-small"
+             style="background:#f39c1215;border-color:#f39c1233;color:#f39c12;">
+            📄 PDF
+          </a>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="empty">No sent transactions yet</p>{% endif %}
+
+<!-- RECEIVED -->
+<h2 class="section-title" style="margin-top:32px;">Received ({{ received|length }})</h2>
+{% if received %}
+<table class="tx-table full">
+  <thead>
+    <tr>
+      <th>Hash</th><th>From</th><th>Type</th><th>Amount / File</th>
+      <th>Algorithm</th><th>Message</th>
+      <th>Time</th><th>File</th><th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tx in received %}
+    <tr>
+      <td class="mono">{{ tx.tx_hash[:12] }}...</td>
+      <td>{{ tx.sender.username }}</td>
+      <td><span class="type-badge">{{ tx.tx_type }}</span></td>
+      <td>
+        {% if tx.crypto_amount %}{{ tx.crypto_amount }} {{ tx.currency }}
+        {% elif tx.amount > 0 %}Rs {{ "{:,.0f}".format(tx.amount) }}
+        {% elif tx.filename %}{{ tx.filename }}
+        {% else %}—{% endif %}
+      </td>
+      <td>
+        {% set algo_class = tx.algorithm | replace('-', '') if tx.algorithm else '' %}
+        <span class="algo-badge {{ algo_class }}">{{ tx.algorithm }}</span>
+        {% if tx.aqs_mode %}
+        <div style="font-size:0.68rem;color:#9b59b6;margin-top:2px;">{{ tx.aqs_mode }}</div>
+        {% endif %}
+      </td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        {{ tx.message or '—' }}
+      </td>
+      <td class="time">
+        {{ (tx.timestamp + timedelta(hours=5, minutes=30)).strftime('%d %b %Y %H:%M') }} IST
+      </td>
+      <td>
+        {% if tx.filename %}
+        <a href="{{ url_for('tx.download', tx_id=tx.id) }}" class="btn-small">⬇</a>
+        {% else %}—{% endif %}
+      </td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="btn-small" onclick="verifyTx({{ tx.id }}, this)"
+                  style="background:#3498db15;border-color:#3498db33;color:#3498db;">
+            🔍 Verify
+          </button>
+          <a href="{{ url_for('tx.receipt', tx_id=tx.id) }}" class="btn-small"
+             style="background:#f39c1215;border-color:#f39c1233;color:#f39c12;">
+            📄 PDF
+          </a>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="empty">No received transactions yet</p>{% endif %}
+
+<!-- Verify popup -->
+<div id="verify-popup" style="display:none;position:fixed;top:20px;right:20px;z-index:9999;
+  background:#1a1f2e;border-radius:12px;padding:24px;min-width:360px;max-width:420px;
+  box-shadow:0 8px 32px #00000088;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <strong id="verify-title" style="font-size:1rem;">Verifying...</strong>
+    <span onclick="document.getElementById('verify-popup').style.display='none'"
+          style="cursor:pointer;color:#666;font-size:1.2rem;">✕</span>
+  </div>
+  <div id="verify-body" style="font-size:0.8rem;color:#888;line-height:2.2;"></div>
+</div>
+
+<script>
+async function verifyTx(txId, btn) {
+  const popup = document.getElementById('verify-popup');
+  const title = document.getElementById('verify-title');
+  const body  = document.getElementById('verify-body');
+
+  btn.textContent     = '...';
+  popup.style.display = 'block';
+  popup.style.border  = '1px solid #ffffff22';
+  title.textContent   = 'Verifying...';
+  body.innerHTML      = '<div style="color:#666;">Running cryptographic verification...</div>';
+
+  const res  = await fetch(`/verify/${txId}`);
+  const data = await res.json();
+
+  const color = data.verified ? '#2ecc71' : '#e74c3c';
+  popup.style.border = `1px solid ${color}44`;
+  title.style.color  = color;
+  title.textContent  = data.verified ? '✅ VERIFIED' : '❌ FAILED';
+
+  const isAqs = data.aqs_mode !== null && data.aqs_mode !== undefined;
+
+  const aqs_section = isAqs ? `
+    <span style="color:#555;">AQS Mode</span>
+    <span style="color:#9b59b6;font-weight:600;">${data.aqs_mode}</span>
+    <span style="color:#555;">Primary Sig</span>
+    <span style="${data.primary_valid ? 'color:#2ecc71' : 'color:#e74c3c'};">
+      ${data.primary_valid ? '✓ Valid' : '✗ Invalid'}
+    </span>
+    <span style="color:#555;">Secondary Sig</span>
+    <span style="${data.secondary_valid ? 'color:#2ecc71' : 'color:#e74c3c'};">
+      ${data.secondary_valid ? '✓ Valid' : '✗ Invalid'}
+    </span>
+  ` : '';
+
+  const cryptoInfo = data.crypto_amount ? `
+    <span style="color:#555;">Crypto Amt</span>
+    <span style="color:#f39c12;">${data.crypto_amount} ${data.currency || ''}</span>
+    ${data.crypto_tx_hash ? `
+    <span style="color:#555;">Blockchain TX</span>
+    <span style="font-family:monospace;color:#aaa;font-size:0.68rem;">${data.crypto_tx_hash.slice(0,18)}...</span>
+    ` : ''}
+  ` : '';
+
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">
+      <span style="color:#555;">TX Hash</span>
+      <span style="font-family:monospace;color:#aaa;font-size:0.7rem;">${data.tx_hash.slice(0,16)}...</span>
+      <span style="color:#555;">Algorithm</span>
+      <span style="color:#00d4ff;font-weight:600;">${data.algorithm}</span>
+      ${aqs_section}
+      <span style="color:#555;">From</span>
+      <span style="color:#aaa;">${data.sender}</span>
+      <span style="color:#555;">To</span>
+      <span style="color:#aaa;">${data.receiver}</span>
+      <span style="color:#555;">Type</span>
+      <span style="color:#aaa;">${data.tx_type}</span>
+      <span style="color:#555;">Amount</span>
+      <span style="color:#aaa;">${data.amount > 0 ? 'Rs ' + data.amount.toLocaleString() : '—'}</span>
+      ${cryptoInfo}
+      <span style="color:#555;">Sig Size</span>
+      <span style="color:#aaa;">${data.sig_size?.toLocaleString()} B</span>
+      <span style="color:#555;">Sign Time</span>
+      <span style="color:#aaa;">${data.sign_time} ms</span>
+      <span style="color:#555;">Timestamp</span>
+      <span style="color:#aaa;">${data.timestamp}</span>
+    </div>
+    <div style="margin-top:12px;padding:10px;background:${color}15;border:1px solid ${color}33;
+                border-radius:8px;color:${color};font-size:0.78rem;">
+      ${data.verified
+        ? `🔐 Verified with <strong>${data.algorithm}</strong>.
+           ${isAqs ? 'AQS-256 dual verification passed.' : 'Data untampered.'}`
+        : `⚠ Verification failed. ${data.aqs_detail || ''}`}
+    </div>
+    ${data.reasoning ? `<div style="margin-top:8px;font-size:0.7rem;color:#555;padding:6px;background:#ffffff05;border-radius:6px;">${data.reasoning}</div>` : ''}
+  `;
+
+  btn.textContent = '🔍 Verify';
+}
+
+(async function markSeen() {
+  try {
+    const res  = await fetch('/api/notifications');
+    const data = await res.json();
+    if (data.length) localStorage.setItem('pq_last_seen_tx_id', data[0].id);
+  } catch(e) {}
+  const badge = document.getElementById('history-badge');
+  const link  = document.getElementById('history-link');
+  if (badge) badge.style.display = 'none';
+  if (link)  link.classList.remove('nav-shine');
+})();
+</script>
+{% endblock %}
